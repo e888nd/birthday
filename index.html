@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🎂 给小寿星的生日祝福</title>
+<title>🎂</title>
 <style>
 /* ============ 可爱生日页 · 全局 ============ */
 :root {
@@ -485,7 +485,6 @@ body {
   text-shadow: 0 2px 8px rgba(120, 60, 90, .55);   /* 建议加这行，暗背景下更清楚 */
   animation: hintBounce 1.6s ease-in-out 1.8s infinite !important;
 }
-
 .share-tip.hidden { display: none; }
 .breath { animation: breathGlow 2.2s ease-in-out 2s infinite !important; }
 @keyframes breathGlow {
@@ -504,9 +503,52 @@ body {
   .polaroid { padding: 12px 12px 6px; }
 }
 
+
+/* ===== 时间验证页（极简） ===== */
+#gate {
+  position: fixed; inset: 0; z-index: 999; background: #fbfaf8;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 300; color: #1f1f1f; letter-spacing: normal;
+}
+#gate.off { display: none; }
+.gate-in { text-align: center; padding: 0 26px; }
+.g-label {
+  font-size: 13px; letter-spacing: .55em; text-indent: .55em;
+  color: #9d9d9d; margin-bottom: 26px; font-weight: 300;
+}
+.g-days {
+  font-size: 68px; line-height: 1; font-weight: 200; letter-spacing: .01em;
+  font-variant-numeric: tabular-nums;
+}
+.g-days em {
+  font-style: normal; font-size: 15px; margin-left: 10px;
+  color: #8f8f8f; letter-spacing: .12em; font-weight: 300;
+}
+.g-time {
+  margin-top: 20px; font-size: 18px; letter-spacing: .26em; text-indent: .26em;
+  color: #57534f; font-variant-numeric: tabular-nums; font-weight: 300;
+}
+.g-rule { width: 34px; height: 1px; background: #d9d6d1; margin: 28px auto; }
+.g-note {
+  font-size: 12px; letter-spacing: .22em; text-indent: .22em;
+  color: #adadad; font-weight: 300;
+}
+@media (max-width: 360px) { .g-days { font-size: 54px; } }
+
 </style>
 </head>
 <body>
+<!-- ===== 时间验证页（农历九月十六解锁） ===== -->
+<div id="gate">
+  <div class="gate-in">
+    <div class="g-label">🤔</div>
+    <div class="g-days"><span id="g-d">--</span><em>天</em></div>
+    <div class="g-time" id="g-t">-- : -- : --</div>
+    <div class="g-rule"></div>
+    <div class="g-note">😳</div>
+  </div>
+</div>
+
 
 <!-- 漂浮装饰 -->
 <div class="decor" id="decor"></div>
@@ -612,7 +654,7 @@ body {
     <div class="result-btns">
       <button id="btn-share" class="btn breath">转发给好友 💌</button>
     </div>
-    <p id="share-tip" class="share-tip hidden">💡 长按上方图片，保存后发送给微信好友 💗</p>
+    <p id="share-tip" class="share-tip hidden">💡 长按上方图片，转发给微信好友 💗</p>
   </div>
   </div>
 </div>
@@ -1413,6 +1455,51 @@ $("btn-mute").addEventListener("click", (e) => {
   e.currentTarget.textContent = muted ? "🔇" : "🔊";
 });
 $("btn-replay").addEventListener("click", () => location.reload());
+
+
+/* ================= 时间验证（农历九月十六解锁） ================= */
+(function () {
+  // 农历九月十六对应的公历日期（已精确换算，2026-2035）
+  var L916 = [
+    "2026-10-25", "2027-10-15", "2028-11-02", "2029-10-23", "2030-10-12",
+    "2031-10-31", "2032-10-19", "2033-10-08", "2034-10-27", "2035-10-16"
+  ];
+  var gate = document.getElementById("gate");
+  if (!gate) return;
+  function unlock() { gate.classList.add("off"); }
+  // 预览后门：网址末尾加 ?preview 可直接查看（方便自己确认页面）
+  if (location.search.indexOf("preview") >= 0) { unlock(); return; }
+
+  function ymd(d) {
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) +
+           "-" + ("0" + d.getDate()).slice(-2);
+  }
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  var now = new Date();
+  if (L916.indexOf(ymd(now)) >= 0) { unlock(); return; }   // 就是今天 → 直接放行
+
+  var target = null;
+  for (var i = 0; i < L916.length; i++) {
+    var t = new Date(L916[i] + "T00:00:00");
+    if (t.getTime() > now.getTime()) { target = t; break; }
+  }
+  if (!target) { unlock(); return; }                        // 兜底：找不到就放行
+
+  var dEl = document.getElementById("g-d"), tEl = document.getElementById("g-t");
+  function tick() {
+    var diff = target.getTime() - new Date().getTime();
+    if (diff <= 0) { unlock(); return; }                    // 到点自动解锁
+    var dd = Math.floor(diff / 86400000);
+    var hh = Math.floor((diff % 86400000) / 3600000);
+    var mm = Math.floor((diff % 3600000) / 60000);
+    var ss = Math.floor((diff % 60000) / 1000);
+    dEl.textContent = dd;
+    tEl.textContent = pad(hh) + " : " + pad(mm) + " : " + pad(ss);
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
 
 </script>
 </body>
